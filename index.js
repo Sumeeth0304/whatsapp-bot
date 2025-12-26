@@ -13,173 +13,108 @@ const userState = {};
 
 app.post("/whatsapp", (req, res) => {
   const from = req.body.From;
+  const message = (req.body.Body || "").trim();
 
-  // Handle both buttons + text fallback
-  const message =
-    req.body.ButtonPayload ||
-    (req.body.Body || "").trim().toUpperCase();
 
   const twiml = new twilio.twiml.MessagingResponse();
   const state = userState[from] || "WELCOME";
 
-  /* =====================
-     1️⃣ WELCOME
-  ====================== */
+  // 1️⃣ Welcome
   if (state === "WELCOME") {
-    const msg = twiml.message(
-      "🙏 Welcome to Swaruchi – Authentic Home-Style Indian Food\n\nHow would you like to order today?"
+    twiml.message(
+      "🙏 Welcome to Swaruchi – Authentic Home-Style Indian Food\n\n" +
+      "How would you like to order today?\n\n" +
+      "1️⃣ Order from menu\n" +
+      "2️⃣ Subscribe to meals\n\n" +
+      "Reply with 1 or 2"
     );
-
-    msg.addAction({
-      buttons: [
-        {
-          type: "reply",
-          reply: { id: "ORDER_MENU", title: "🍽️ Order from Menu" }
-        },
-        {
-          type: "reply",
-          reply: { id: "SUBSCRIBE", title: "🥘 Subscribe to Meals" }
-        }
-      ]
-    });
-
     userState[from] = "MAIN_MENU";
   }
 
-  /* =====================
-     2️⃣ MAIN MENU
-  ====================== */
+  // 2️⃣ Main Menu
   else if (state === "MAIN_MENU") {
-    if (message === "ORDER_MENU") {
-      const msg = twiml.message("🍽️ Choose a menu type:");
-
-      msg.addAction({
-        buttons: [
-          {
-            type: "reply",
-            reply: { id: "VEG_MENU", title: "🥗 Veg Menu" }
-          },
-          {
-            type: "reply",
-            reply: { id: "NON_VEG_MENU", title: "🍗 Non-Veg Menu" }
-          }
-        ]
-      });
-
+    if (message === "1") {
+      twiml.message(
+        "🍽️ Menu Type:\n\n" +
+        "1️⃣ Veg Menu\n" +
+        "2️⃣ Non-Veg Menu\n\n" +
+        "Reply with 1 or 2"
+      );
       userState[from] = "MENU_TYPE";
     }
-
-    else if (message === "SUBSCRIBE") {
-      const msg = twiml.message("🥘 Choose a subscription type:");
-
-      msg.addAction({
-        buttons: [
-          {
-            type: "reply",
-            reply: { id: "SUB_VEG", title: "🥗 Veg Meals" }
-          },
-          {
-            type: "reply",
-            reply: { id: "SUB_NON_VEG", title: "🍗 Non-Veg Meals" }
-          }
-        ]
-      });
-
+    else if (message === "2") {
+      twiml.message(
+        "🥘 Meal Subscriptions:\n\n" +
+        "1️⃣ Veg Meals\n" +
+        "2️⃣ Non-Veg Meals\n\n" +
+        "Reply with 1 or 2"
+      );
       userState[from] = "SUB_TYPE";
     }
-
     else {
-      twiml.message("Please choose an option using the buttons.");
+      twiml.message("Please reply with 1 or 2");
     }
   }
 
-  /* =====================
-     3️⃣ MENU TYPE
-  ====================== */
+  // 3️⃣ Menu Type
   else if (state === "MENU_TYPE") {
-    if (message === "VEG_MENU") {
+    if (message === "1") {
       twiml.message(
         "🥗 Veg Menu:\n\n" +
-        "• Paneer Butter Masala\n" +
-        "• Dal Tadka\n" +
-        "• Veg Thali\n\n" +
-        "Ordering coming next 🙂"
+        "1️⃣ Paneer Butter Masala\n" +
+        "2️⃣ Dal Tadka\n" +
+        "3️⃣ Veg Thali\n\n" +
+        "Reply with item number"
       );
-    }
-
-    else if (message === "NON_VEG_MENU") {
+      userState[from] = "VEG_ITEM";
+    } else if (message === "2") {
       twiml.message(
         "🍗 Non-Veg Menu:\n\n" +
-        "• Chicken Curry\n" +
-        "• Chicken Biryani\n" +
-        "• Goat Curry\n\n" +
-        "Ordering coming next 🙂"
+        "1️⃣ Chicken Curry\n" +
+        "2️⃣ Chicken Biryani\n" +
+        "3️⃣ Goat Curry\n\n" +
+        "Reply with item number"
       );
-    }
-
-    else {
-      twiml.message("Please select a menu using the buttons.");
+      userState[from] = "NON_VEG_ITEM";
+    } else {
+      twiml.message("Reply with 1 or 2");
     }
   }
 
-  /* =====================
-     4️⃣ SUBSCRIPTION TYPE
-  ====================== */
+  // 4️⃣ Subscription Type
   else if (state === "SUB_TYPE") {
-    if (message === "SUB_VEG") {
+    if (message === "1") {
       twiml.message(
         "🥗 Veg Meal Subscription\n\n" +
-        "Fresh home-style vegetarian meals.\n\n" +
-        "Next: choose duration."
+        "Fresh home-style veg meals\n\n" +
+        "Reply YES to continue or MENU to go back"
       );
       userState[from] = "SUB_CONFIRM";
-    }
-
-    else if (message === "SUB_NON_VEG") {
+    } else if (message === "2") {
       twiml.message(
         "🍗 Non-Veg Meal Subscription\n\n" +
-        "Chicken-based home-style meals.\n\n" +
-        "Next: choose duration."
+        "Chicken-based home-style meals\n\n" +
+        "Reply YES to continue or MENU to go back"
       );
       userState[from] = "SUB_CONFIRM";
-    }
-
-    else {
-      twiml.message("Please choose a subscription using the buttons.");
+    } else {
+      twiml.message("Reply with 1 or 2");
     }
   }
 
-  /* =====================
-     5️⃣ SUB CONFIRM
-  ====================== */
+  // 5️⃣ Subscription Confirm
   else if (state === "SUB_CONFIRM") {
-    const msg = twiml.message("📅 How long would you like to subscribe?");
-
-    msg.addAction({
-      buttons: [
-        {
-          type: "reply",
-          reply: { id: "1_WEEK", title: "1️⃣ 1 Week" }
-        },
-        {
-          type: "reply",
-          reply: { id: "2_WEEKS", title: "2️⃣ 2 Weeks" }
-        },
-        {
-          type: "reply",
-          reply: { id: "1_MONTH", title: "📆 1 Month" }
-        }
-      ]
-    });
-
-    userState[from] = "SUB_DURATION";
-  }
-
-  /* =====================
-     DEFAULT FALLBACK
-  ====================== */
-  else {
-    twiml.message("Type MENU to start over.");
+    if (message.toUpperCase() === "YES") {
+      twiml.message(
+        "How long would you like to subscribe?\n\n" +
+        "1️⃣ 1 Week\n" +
+        "2️⃣ 2 Weeks\n" +
+        "3️⃣ 1 Month"
+      );
+      userState[from] = "SUB_DURATION";
+    } else {
+      twiml.message("Reply YES to continue");
+    }
   }
 
   res.type("text/xml");
