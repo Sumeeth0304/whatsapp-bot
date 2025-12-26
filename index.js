@@ -13,7 +13,8 @@ const userState = {};
 
 app.post("/whatsapp", (req, res) => {
   const from = req.body.From;
-  const message = req.body.Body.trim();
+  const message = (req.body.Body || "").trim();
+
 
   const twiml = new twilio.twiml.MessagingResponse();
   const state = userState[from] || "WELCOME";
